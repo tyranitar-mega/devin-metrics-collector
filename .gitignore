@@ -17,6 +17,8 @@
 !.env.example
 var/
 tables.scopeql
+catalog-plan.json
+catalog-plan-*.json
 bin/
 dist/
 *.log

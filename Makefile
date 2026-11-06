@@ -14,11 +14,15 @@
 
 TELESCOPE_IMAGE ?= ghcr.io/scopedb/telescope:v0.4.0
 ENV_FILE ?= .env
+PYTHON ?= python3
+CATALOG_RESOURCE ?= /v1/catalog/databases/scopedb/schemas/devin_cli
+CATALOG_DEFINITION ?= catalog/devin-cli.schema.json
+CATALOG_PLAN ?= catalog-plan.json
 COMPOSE = docker compose --env-file $(if $(wildcard $(ENV_FILE)),$(ENV_FILE),/dev/null)
 CONFIG_MOUNT = -v $(CURDIR)/telescope.yaml:/etc/telescope/telescope.yaml:ro
 SAMPLES_MOUNT = -v $(CURDIR)/samples:/samples:ro
 
-.PHONY: help up down logs ps status verify query plan validate preview inspect capture config-check
+.PHONY: help up down logs ps status verify query plan catalog-plan catalog-apply catalog-get validate preview inspect capture config-check
 
 help:
 	@echo "make up                 Start Telescope with Docker Compose"
@@ -27,7 +31,9 @@ help:
 	@echo "make status             Show ScopeDB delivery status"
 	@echo "make verify             Send a synthetic metrics probe"
 	@echo "make query Q='...'      Run a ScopeQL query"
-	@echo "make plan               Generate tables.scopeql for the live workspace"
+	@echo "make plan               Preview the Catalog API schema/table change"
+	@echo "make catalog-apply      Apply the saved Catalog API plan"
+	@echo "make catalog-get        Read the schema from the Catalog API"
 	@echo "make validate           Validate mapping against the live ScopeDB catalog"
 	@echo "make preview            Preview mapping with the bundled sample"
 	@echo "make config-check       Validate Compose configuration without starting it"
@@ -54,11 +60,24 @@ query:
 	@test -n "$(Q)" || (echo 'Usage: make query Q="FROM scopedb.devin_cli.metrics SELECT metric_name, value LIMIT 5"' >&2; exit 2)
 	$(COMPOSE) exec telescope telescope query "$(Q)"
 
-plan:
+plan: catalog-plan
+
+catalog-plan:
 	@test -f $(ENV_FILE) || (echo "Create $(ENV_FILE) from .env.example first" >&2; exit 2)
-	docker run --rm --env-file $(ENV_FILE) $(CONFIG_MOUNT) $(SAMPLES_MOUNT) $(TELESCOPE_IMAGE) \
-	  plan --sample metrics=/samples/devin-metrics.otlp.json \
-	  --format scopeql /etc/telescope/telescope.yaml > tables.scopeql
+	@$(PYTHON) scripts/scopedb_catalog.py plan --env-file $(ENV_FILE) \
+	  --resource $(CATALOG_RESOURCE) \
+	  --file $(CATALOG_DEFINITION) \
+	  --out $(CATALOG_PLAN)
+
+catalog-apply:
+	@test -f $(ENV_FILE) || (echo "Create $(ENV_FILE) from .env.example first" >&2; exit 2)
+	@test -f $(CATALOG_PLAN) || (echo "Run make plan first" >&2; exit 2)
+	@$(PYTHON) scripts/scopedb_catalog.py apply --env-file $(ENV_FILE) \
+	  $(if $(ALLOW_DESTRUCTIVE),--allow-destructive) $(CATALOG_PLAN)
+
+catalog-get:
+	@test -f $(ENV_FILE) || (echo "Create $(ENV_FILE) from .env.example first" >&2; exit 2)
+	@$(PYTHON) scripts/scopedb_catalog.py get --env-file $(ENV_FILE) --resource $(CATALOG_RESOURCE)
 
 validate:
 	@test -f $(ENV_FILE) || (echo "Create $(ENV_FILE) from .env.example first" >&2; exit 2)

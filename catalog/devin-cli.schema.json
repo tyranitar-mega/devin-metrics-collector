@@ -1,0 +1,51 @@
+{
+  "name": "devin_cli",
+  "comment": "Devin CLI telemetry",
+  "tables": [
+    {
+      "name": "metrics",
+      "comment": "Devin CLI OpenTelemetry metrics",
+      "columns": [
+        {"name": "attribute_type", "data_type": "string", "expression": null, "comment": null, "indexes": []},
+        {"name": "datapoint_attributes", "data_type": "object", "expression": null, "comment": null, "indexes": []},
+        {"name": "decision", "data_type": "string", "expression": null, "comment": null, "indexes": []},
+        {"name": "decision_source", "data_type": "string", "expression": null, "comment": null, "indexes": []},
+        {"name": "deployment_environment", "data_type": "string", "expression": null, "comment": null, "indexes": []},
+        {"name": "distribution", "data_type": "object", "expression": null, "comment": null, "indexes": []},
+        {"name": "double_value", "data_type": "float", "expression": null, "comment": null, "indexes": []},
+        {"name": "host_arch", "data_type": "string", "expression": null, "comment": null, "indexes": []},
+        {"name": "int_value", "data_type": "int", "expression": null, "comment": null, "indexes": []},
+        {"name": "metric_description", "data_type": "string", "expression": null, "comment": null, "indexes": []},
+        {"name": "metric_is_monotonic", "data_type": "boolean", "expression": null, "comment": null, "indexes": []},
+        {"name": "metric_name", "data_type": "string", "expression": null, "comment": null, "indexes": []},
+        {"name": "metric_temporality", "data_type": "string", "expression": null, "comment": null, "indexes": []},
+        {"name": "metric_type", "data_type": "string", "expression": null, "comment": null, "indexes": []},
+        {"name": "metric_unit", "data_type": "string", "expression": null, "comment": null, "indexes": []},
+        {"name": "model", "data_type": "string", "expression": null, "comment": null, "indexes": []},
+        {"name": "os_type", "data_type": "string", "expression": null, "comment": null, "indexes": []},
+        {"name": "recorded_at", "data_type": "timestamp", "expression": null, "comment": null, "indexes": []},
+        {"name": "resource_attributes", "data_type": "object", "expression": null, "comment": null, "indexes": []},
+        {"name": "scope_name", "data_type": "string", "expression": null, "comment": null, "indexes": []},
+        {"name": "scope_version", "data_type": "string", "expression": null, "comment": null, "indexes": []},
+        {"name": "service_name", "data_type": "string", "expression": null, "comment": null, "indexes": []},
+        {"name": "service_version", "data_type": "string", "expression": null, "comment": null, "indexes": []},
+        {"name": "session_id", "data_type": "string", "expression": null, "comment": null, "indexes": []},
+        {"name": "start_recorded_at", "data_type": "timestamp", "expression": null, "comment": null, "indexes": []},
+        {"name": "start_timestamp_unix_nano", "data_type": "string", "expression": null, "comment": null, "indexes": []},
+        {"name": "start_type", "data_type": "string", "expression": null, "comment": null, "indexes": []},
+        {"name": "team_id", "data_type": "string", "expression": null, "comment": null, "indexes": []},
+        {"name": "terminal_type", "data_type": "string", "expression": null, "comment": null, "indexes": []},
+        {"name": "timestamp_unix_nano", "data_type": "string", "expression": null, "comment": null, "indexes": []},
+        {"name": "tool_name", "data_type": "string", "expression": null, "comment": null, "indexes": []},
+        {"name": "user_id", "data_type": "string", "expression": null, "comment": null, "indexes": []},
+        {"name": "value", "data_type": "float", "expression": null, "comment": null, "indexes": []},
+        {"name": "value_type", "data_type": "string", "expression": null, "comment": null, "indexes": []}
+      ],
+      "partition_by": [],
+      "cluster_by": [],
+      "distinct": {"on": [], "by": []},
+      "retention_days": null
+    }
+  ],
+  "views": []
+}

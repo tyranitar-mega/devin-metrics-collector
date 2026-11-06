@@ -11,6 +11,7 @@ Only the `metrics` signal is enabled. Devin CLI logs and traces are not part of 
 ## Prerequisites
 
 - Docker and Docker Compose
+- Python 3 for the Catalog API helper
 - A ScopeDB Cloud workspace data-plane endpoint and API key
 - A Devin CLI version with OTLP metrics export
 
@@ -23,9 +24,9 @@ scope api-key create devin-metrics --expires-in 720h
 
 `scope api-key create` shows the key only once. You can also create a key in the workspace's API Keys page in the ScopeDB Console.
 
-## Prepare the ScopeDB table
+## Prepare the ScopeDB resources
 
-Telescope does not create or alter tables automatically. `make plan` compares the mapping with the live catalog and writes additive ScopeQL to `tables.scopeql`.
+Telescope does not create catalog resources automatically. This project creates the `devin_cli` schema and its `metrics` table through the ScopeDB Catalog API instead of ScopeQL `CREATE TABLE`/`CREATE SCHEMA` statements.
 
 ```bash
 cp .env.example .env
@@ -34,9 +35,15 @@ make config-check
 make plan
 ```
 
-Review `tables.scopeql`, then run it in the ScopeDB Console SQL editor or with the ScopeQL CLI against the same workspace. The file can contain `CREATE DATABASE`, `CREATE SCHEMA`, `CREATE TABLE`, and `ALTER TABLE ... ADD COLUMN` statements.
+`make plan` sends the definition in `catalog/devin-cli.schema.json` to `PUT /v1/catalog/databases/scopedb/schemas/devin_cli?dry_run=true`, then writes the reusable preview to `catalog-plan.json`. The plan records the catalog ETag, and `catalog-apply` sends it back with `If-Match`; regenerate the plan after any catalog change or successful apply. Review the `before`, `after`, and `destructive` fields, then commit the same definition with:
 
-After the table exists, validate that the live catalog matches the mapping:
+```bash
+make catalog-apply
+```
+
+Catalog resources are complete replacements: the schema definition owns every table and view in `devin_cli`. If the preview reports `destructive: true`, inspect it carefully and rerun with `ALLOW_DESTRUCTIVE=1 make catalog-apply` only when data loss is intended. `catalog-plan.json` does not contain the API key and is ignored by git.
+
+After the table exists, validate that the live catalog matches the Telescope mapping:
 
 ```bash
 make validate
@@ -100,11 +107,12 @@ Devin CLI counters use OTLP delta temporality. `metric_temporality` is stored in
 
 ## End-to-end delivery flow
 
-1. Devin CLI exports OTLP/HTTP protobuf metrics to `http://localhost:4318/v1/metrics`.
-2. Telescope receives the metrics through its OTLP receiver.
-3. Telescope maps each data point into a row for `scopedb.devin_cli.metrics`.
-4. Telescope batches rows and appends them to the ScopeDB workspace configured by `TELESCOPE_SCOPEDB_ENDPOINT` and `TELESCOPE_SCOPEDB_API_KEY`.
-5. `make status` shows `received`, `written`, `queued`, `dropped`, and `ambiguous` counters; `make verify` confirms a real ScopeDB append.
+1. `make plan` and `make catalog-apply` create or update `scopedb.devin_cli` through the ScopeDB Catalog API.
+2. Devin CLI exports OTLP/HTTP protobuf metrics to `http://localhost:4318/v1/metrics`.
+3. Telescope receives the metrics through its OTLP receiver.
+4. Telescope maps each data point into a row for `scopedb.devin_cli.metrics`.
+5. Telescope batches rows and appends them to the ScopeDB workspace configured by `TELESCOPE_SCOPEDB_ENDPOINT` and `TELESCOPE_SCOPEDB_API_KEY`.
+6. `make status` shows `received`, `written`, `queued`, `dropped`, and `ambiguous` counters; `make verify` confirms a real ScopeDB append.
 
 If ScopeDB is unavailable or the table is not ready yet, Telescope keeps accepted metrics in a disk-backed file queue and retries delivery. The queue is stored in the Docker named volume `telescope-queue` (`/var/lib/telescope/queue` in the container). Do not delete the volume while it contains undelivered data.
 
@@ -114,6 +122,7 @@ If ScopeDB is unavailable or the table is not ready yet, Telescope keeps accepte
 make logs       # Follow Telescope container logs
 make status     # Receiver, queue, and ScopeDB delivery counters
 make capture    # Capture the latest 100 metric data points for mapping debug
+make catalog-get # Read the current devin_cli schema through the Catalog API
 curl -s http://127.0.0.1:8080/v1/ingestion/status
 curl -s http://127.0.0.1:8080/metrics
 ```
