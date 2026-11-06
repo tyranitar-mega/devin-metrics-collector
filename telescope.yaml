@@ -1,0 +1,117 @@
+# Devin CLI metrics -> Telescope -> ScopeDB Cloud.
+# Only the metrics signal is enabled. Logs and traces are intentionally absent.
+
+delivery:
+  timeout: 30s
+  max_rows: 8000
+  max_bytes: 4194304
+  queue:
+    type: file
+    directory: var/telescope-queue
+    max_bytes: 268435456
+    consumers: 1
+  retry:
+    initial_interval: 5s
+    max_interval: 1m
+    max_elapsed_time: 0s
+
+batch:
+  size: 2000
+  max_size: 2000
+  timeout: 10s
+
+resources:
+  memory_limit_mib: 512
+  memory_spike_mib: 128
+
+telemetry:
+  resource:
+    service.name: devin-metrics-telescope
+  level: normal
+  log_level: warn
+
+signals:
+  metrics:
+    table: scopedb.devin_cli.metrics
+    mapping:
+      recorded_at: datapoint.timestamp
+      start_recorded_at: datapoint.start_time
+      timestamp_unix_nano: datapoint.timestamp_unix_nano
+      start_timestamp_unix_nano: datapoint.start_time_unix_nano
+      metric_name: metric.name
+      metric_description: metric.description
+      metric_unit: metric.unit
+      metric_type: metric.type
+      metric_temporality: metric.temporality
+      metric_is_monotonic: metric.is_monotonic
+      value:
+        source: datapoint.value
+        cast: float
+      value_type: datapoint.value_type
+      int_value: datapoint.int_value
+      double_value: datapoint.double_value
+      distribution:
+        source: datapoint.distribution
+        cast: object
+      datapoint_attributes:
+        source: datapoint.attributes
+        cast: object
+      resource_attributes:
+        source: resource.attributes
+        cast: object
+      scope_name: scope.name
+      scope_version: scope.version
+      service_name:
+        sources:
+          - resource.attributes["service.name"]
+          - resource.attributes["service"]
+        default: unknown
+        cast: string
+      service_version:
+        source: resource.attributes["service.version"]
+        cast: string
+      os_type:
+        source: resource.attributes["os.type"]
+        cast: string
+      host_arch:
+        source: resource.attributes["host.arch"]
+        cast: string
+      deployment_environment:
+        source: resource.attributes["deployment.environment"]
+        cast: string
+      team_id:
+        source: resource.attributes["team.id"]
+        cast: string
+      user_id:
+        sources:
+          - datapoint.attributes["user.id"]
+          - resource.attributes["user.id"]
+        cast: string
+      session_id:
+        sources:
+          - datapoint.attributes["session.id"]
+          - resource.attributes["session.id"]
+        cast: string
+      terminal_type:
+        sources:
+          - datapoint.attributes["terminal.type"]
+          - resource.attributes["terminal.type"]
+        cast: string
+      attribute_type:
+        source: datapoint.attributes["type"]
+        cast: string
+      model:
+        source: datapoint.attributes["model"]
+        cast: string
+      start_type:
+        source: datapoint.attributes["start_type"]
+        cast: string
+      tool_name:
+        source: datapoint.attributes["tool_name"]
+        cast: string
+      decision:
+        source: datapoint.attributes["decision"]
+        cast: string
+      decision_source:
+        source: datapoint.attributes["source"]
+        cast: string

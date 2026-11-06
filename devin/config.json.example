@@ -1,0 +1,10 @@
+{
+  "otel": {
+    "metrics_endpoint": "http://localhost:4318/v1/metrics",
+    "metric_export_interval_ms": 10000,
+    "resource_attributes": {
+      "team.id": "devin-metrics",
+      "deployment.environment": "local"
+    }
+  }
+}

@@ -1,0 +1,69 @@
+TELESCOPE_IMAGE ?= ghcr.io/scopedb/telescope:v0.4.0
+ENV_FILE ?= .env
+COMPOSE = docker compose --env-file $(if $(wildcard $(ENV_FILE)),$(ENV_FILE),/dev/null)
+CONFIG_MOUNT = -v $(CURDIR)/telescope.yaml:/etc/telescope/telescope.yaml:ro
+SAMPLES_MOUNT = -v $(CURDIR)/samples:/samples:ro
+
+.PHONY: help up down logs ps status verify query plan validate preview inspect capture config-check
+
+help:
+	@echo "make up                 Start Telescope with Docker Compose"
+	@echo "make down               Stop Telescope"
+	@echo "make logs               Follow Telescope logs"
+	@echo "make status             Show ScopeDB delivery status"
+	@echo "make verify             Send a synthetic metrics probe"
+	@echo "make query Q='...'      Run a ScopeQL query"
+	@echo "make plan               Generate tables.scopeql for the live workspace"
+	@echo "make validate           Validate mapping against the live ScopeDB catalog"
+	@echo "make preview            Preview mapping with the bundled sample"
+	@echo "make config-check       Validate Compose configuration without starting it"
+
+up:
+	$(COMPOSE) up -d
+
+down:
+	$(COMPOSE) down
+
+logs:
+	$(COMPOSE) logs -f telescope
+
+ps:
+	$(COMPOSE) ps
+
+status:
+	$(COMPOSE) exec telescope telescope status
+
+verify:
+	$(COMPOSE) exec telescope telescope verify metrics
+
+query:
+	@test -n "$(Q)" || (echo 'Usage: make query Q="FROM scopedb.devin_cli.metrics SELECT metric_name, value LIMIT 5"' >&2; exit 2)
+	$(COMPOSE) exec telescope telescope query "$(Q)"
+
+plan:
+	@test -f $(ENV_FILE) || (echo "Create $(ENV_FILE) from .env.example first" >&2; exit 2)
+	docker run --rm --env-file $(ENV_FILE) $(CONFIG_MOUNT) $(SAMPLES_MOUNT) $(TELESCOPE_IMAGE) \
+	  plan --sample metrics=/samples/devin-metrics.otlp.json \
+	  --format scopeql /etc/telescope/telescope.yaml > tables.scopeql
+
+validate:
+	@test -f $(ENV_FILE) || (echo "Create $(ENV_FILE) from .env.example first" >&2; exit 2)
+	docker run --rm --env-file $(ENV_FILE) $(CONFIG_MOUNT) $(TELESCOPE_IMAGE) \
+	  validate /etc/telescope/telescope.yaml
+
+preview:
+	docker run --rm $(CONFIG_MOUNT) $(SAMPLES_MOUNT) $(TELESCOPE_IMAGE) \
+	  preview --offline --sample metrics=/samples/devin-metrics.otlp.json \
+	  /etc/telescope/telescope.yaml
+
+inspect:
+	docker run --rm $(CONFIG_MOUNT) $(SAMPLES_MOUNT) $(TELESCOPE_IMAGE) \
+	  inspect metrics --sample /samples/devin-metrics.otlp.json
+
+capture:
+	$(COMPOSE) exec telescope telescope capture --limit 100 metrics
+
+config-check:
+	TELESCOPE_SCOPEDB_ENDPOINT=$${TELESCOPE_SCOPEDB_ENDPOINT:-https://example.invalid} \
+	TELESCOPE_SCOPEDB_API_KEY=$${TELESCOPE_SCOPEDB_API_KEY:-config-check} \
+	$(COMPOSE) config --quiet

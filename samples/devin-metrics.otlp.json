@@ -1,0 +1,149 @@
+{
+  "resourceMetrics": [
+    {
+      "resource": {
+        "attributes": [
+          {"key": "service.name", "value": {"stringValue": "devin-local"}},
+          {"key": "service.version", "value": {"stringValue": "3000.11.234"}},
+          {"key": "os.type", "value": {"stringValue": "macos"}},
+          {"key": "host.arch", "value": {"stringValue": "arm64"}},
+          {"key": "deployment.environment", "value": {"stringValue": "local"}},
+          {"key": "team.id", "value": {"stringValue": "devin-metrics"}}
+        ]
+      },
+      "scopeMetrics": [
+        {
+          "scope": {"name": "ai.devin.local"},
+          "metrics": [
+            {
+              "name": "devin.session.count",
+              "description": "Sessions started",
+              "unit": "1",
+              "sum": {
+                "dataPoints": [
+                  {
+                    "startTimeUnixNano": "1762387200000000000",
+                    "timeUnixNano": "1762387260000000000",
+                    "asInt": "1",
+                    "attributes": [
+                      {"key": "session.id", "value": {"stringValue": "session-example"}},
+                      {"key": "terminal.type", "value": {"stringValue": "cli"}},
+                      {"key": "user.id", "value": {"stringValue": "user-example"}},
+                      {"key": "start_type", "value": {"stringValue": "interactive"}}
+                    ]
+                  }
+                ],
+                "aggregationTemporality": 1,
+                "isMonotonic": true
+              }
+            },
+            {
+              "name": "devin.token.usage",
+              "description": "Tokens used by model requests",
+              "unit": "token",
+              "sum": {
+                "dataPoints": [
+                  {
+                    "startTimeUnixNano": "1762387200000000000",
+                    "timeUnixNano": "1762387260000000000",
+                    "asInt": "1200",
+                    "attributes": [
+                      {"key": "session.id", "value": {"stringValue": "session-example"}},
+                      {"key": "terminal.type", "value": {"stringValue": "cli"}},
+                      {"key": "user.id", "value": {"stringValue": "user-example"}},
+                      {"key": "model", "value": {"stringValue": "swe-2-flash-medium"}},
+                      {"key": "type", "value": {"stringValue": "input"}}
+                    ]
+                  },
+                  {
+                    "startTimeUnixNano": "1762387200000000000",
+                    "timeUnixNano": "1762387260000000000",
+                    "asInt": "340",
+                    "attributes": [
+                      {"key": "session.id", "value": {"stringValue": "session-example"}},
+                      {"key": "terminal.type", "value": {"stringValue": "cli"}},
+                      {"key": "user.id", "value": {"stringValue": "user-example"}},
+                      {"key": "model", "value": {"stringValue": "swe-2-flash-medium"}},
+                      {"key": "type", "value": {"stringValue": "output"}}
+                    ]
+                  }
+                ],
+                "aggregationTemporality": 1,
+                "isMonotonic": true
+              }
+            },
+            {
+              "name": "devin.code_edit_tool.decision",
+              "description": "Accepted/rejected code-edit tool calls",
+              "unit": "1",
+              "sum": {
+                "dataPoints": [
+                  {
+                    "startTimeUnixNano": "1762387200000000000",
+                    "timeUnixNano": "1762387260000000000",
+                    "asInt": "1",
+                    "attributes": [
+                      {"key": "session.id", "value": {"stringValue": "session-example"}},
+                      {"key": "terminal.type", "value": {"stringValue": "cli"}},
+                      {"key": "user.id", "value": {"stringValue": "user-example"}},
+                      {"key": "tool_name", "value": {"stringValue": "edit"}},
+                      {"key": "decision", "value": {"stringValue": "accepted"}},
+                      {"key": "source", "value": {"stringValue": "config"}}
+                    ]
+                  }
+                ],
+                "aggregationTemporality": 1,
+                "isMonotonic": true
+              }
+            },
+            {
+              "name": "devin.lines_of_code.count",
+              "description": "Lines added or removed by successful code-edit tools",
+              "unit": "{line}",
+              "sum": {
+                "dataPoints": [
+                  {
+                    "startTimeUnixNano": "1762387200000000000",
+                    "timeUnixNano": "1762387260000000000",
+                    "asInt": "42",
+                    "attributes": [
+                      {"key": "session.id", "value": {"stringValue": "session-example"}},
+                      {"key": "terminal.type", "value": {"stringValue": "cli"}},
+                      {"key": "user.id", "value": {"stringValue": "user-example"}},
+                      {"key": "model", "value": {"stringValue": "swe-2-flash-medium"}},
+                      {"key": "type", "value": {"stringValue": "added"}}
+                    ]
+                  }
+                ],
+                "aggregationTemporality": 1,
+                "isMonotonic": true
+              }
+            },
+            {
+              "name": "devin.active_time.total",
+              "description": "Seconds spent processing turns",
+              "unit": "s",
+              "sum": {
+                "dataPoints": [
+                  {
+                    "startTimeUnixNano": "1762387200000000000",
+                    "timeUnixNano": "1762387260000000000",
+                    "asDouble": 12.5,
+                    "attributes": [
+                      {"key": "session.id", "value": {"stringValue": "session-example"}},
+                      {"key": "terminal.type", "value": {"stringValue": "cli"}},
+                      {"key": "user.id", "value": {"stringValue": "user-example"}},
+                      {"key": "type", "value": {"stringValue": "cli"}}
+                    ]
+                  }
+                ],
+                "aggregationTemporality": 1,
+                "isMonotonic": true
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
