@@ -143,3 +143,7 @@ make capture > captured.otlp.json
 - The Telescope OTLP receiver uses plaintext HTTP. Use it only on trusted networks; for remote deployments, put it behind a TLS/authenticated proxy.
 - The operational endpoints `/healthz`, `/readyz`, `/v1/ingestion/status`, and `/metrics` have no authentication. Compose binds them to `127.0.0.1:8080` by default.
 - Devin CLI metrics can include metadata such as `session.id`, `user.id`, model names, and tool names. Do not put high-cardinality or sensitive values in `resource_attributes`.
+
+## License
+
+Apache License 2.0. See [LICENSE](LICENSE).
