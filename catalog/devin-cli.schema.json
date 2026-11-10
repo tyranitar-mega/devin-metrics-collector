@@ -45,6 +45,21 @@
       "cluster_by": [],
       "distinct": {"on": [], "by": []},
       "retention_days": null
+    },
+    {
+      "name": "model_pricing",
+      "comment": "Per-model token pricing used by cost queries",
+      "columns": [
+        {"name": "model", "data_type": "string", "expression": null, "comment": null, "indexes": []},
+        {"name": "input_rate_per_million", "data_type": "float", "expression": null, "comment": null, "indexes": []},
+        {"name": "cached_input_rate_per_million", "data_type": "float", "expression": null, "comment": null, "indexes": []},
+        {"name": "output_rate_per_million", "data_type": "float", "expression": null, "comment": null, "indexes": []},
+        {"name": "updated_at", "data_type": "timestamp", "expression": null, "comment": null, "indexes": []}
+      ],
+      "partition_by": [],
+      "cluster_by": [],
+      "distinct": {"on": ["model"], "by": ["updated_at DESC"]},
+      "retention_days": null
     }
   ],
   "views": []

@@ -49,6 +49,16 @@ After the table exists, validate that the live catalog matches the Telescope map
 make validate
 ```
 
+## Load model pricing
+
+The same catalog definition includes `scopedb.devin_cli.model_pricing`, which holds the per-model token rates used by `queries/model-usage-last-7-days.scopeql`. The rates live in `pricing/model-pricing.scopeql`; load or refresh them with scopedb-cli:
+
+```bash
+scope query -f pricing/model-pricing.scopeql
+```
+
+The table deduplicates on `model` by `updated_at DESC`, so each run retains the newest row for every model instead of accumulating duplicate rates.
+
 ## Start the receiver
 
 ```bash
