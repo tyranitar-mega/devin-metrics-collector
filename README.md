@@ -133,8 +133,8 @@ make logs       # Follow Telescope container logs
 make status     # Receiver, queue, and ScopeDB delivery counters
 make capture    # Capture the latest 100 metric data points for mapping debug
 make catalog-get # Read the current devin_cli schema through the Catalog API
-curl -s http://127.0.0.1:8080/v1/ingestion/status
-curl -s http://127.0.0.1:8080/metrics
+curl -s http://127.0.0.1:18080/v1/ingestion/status
+curl -s http://127.0.0.1:18080/metrics
 ```
 
 In `status`, `received` counts data points accepted by the OTLP receiver, `written` counts rows confirmed by ScopeDB append acknowledgements, and `queued`/`dropped`/`ambiguous` help diagnose delivery problems.
@@ -160,7 +160,7 @@ make capture > captured.otlp.json
 
 - `.env` contains the ScopeDB API key and is ignored by git; never commit the real key.
 - The Telescope OTLP receiver uses plaintext HTTP. Use it only on trusted networks; for remote deployments, put it behind a TLS/authenticated proxy.
-- The operational endpoints `/healthz`, `/readyz`, `/v1/ingestion/status`, and `/metrics` have no authentication. Compose binds them to `127.0.0.1:8080` by default.
+- The operational endpoints `/healthz`, `/readyz`, `/v1/ingestion/status`, and `/metrics` have no authentication. Compose binds them to `127.0.0.1:18080` by default.
 - Devin CLI metrics can include metadata such as `session.id`, `user.id`, model names, and tool names. Do not put high-cardinality or sensitive values in `resource_attributes`.
 
 ## License
