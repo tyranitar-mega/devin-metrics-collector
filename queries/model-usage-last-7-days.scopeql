@@ -13,65 +13,83 @@
 -- limitations under the License.
 
 FROM (
-  FROM scopedb.devin_cli.metrics
-  WHERE metric_name = 'devin.token.usage'
-    AND recorded_at >= NOW() - 'PT168H'::interval
-  GROUP BY model
-  AGGREGATE
-    SUM(CASE attribute_type WHEN 'input' THEN value ELSE 0.0 END) AS input_tokens,
-    SUM(CASE attribute_type WHEN 'cacheRead' THEN value ELSE 0.0 END) AS cache_read_tokens,
-    SUM(CASE attribute_type WHEN 'cacheCreation' THEN value ELSE 0.0 END) AS cache_creation_tokens,
-    SUM(CASE attribute_type WHEN 'output' THEN value ELSE 0.0 END) AS output_tokens
-) AS usage
-LEFT JOIN scopedb.devin_cli.model_pricing AS rates ON usage.model = rates.model
-SELECT
-  usage.model AS model,
-  IF(
-    usage.input_tokens >= 1000000.0,
-    CAST(ROUND(usage.input_tokens / 100000.0) / 10.0 AS string) || 'M',
+  FROM (
+    FROM scopedb.devin_cli.metrics
+    WHERE metric_name = 'devin.token.usage'
+      AND recorded_at >= NOW() - 'PT168H'::interval
+    GROUP BY model
+    AGGREGATE
+      SUM(CASE attribute_type WHEN 'input' THEN value ELSE 0.0 END) AS input_tokens,
+      SUM(CASE attribute_type WHEN 'cacheRead' THEN value ELSE 0.0 END) AS cache_read_tokens,
+      SUM(CASE attribute_type WHEN 'cacheCreation' THEN value ELSE 0.0 END) AS cache_creation_tokens,
+      SUM(CASE attribute_type WHEN 'output' THEN value ELSE 0.0 END) AS output_tokens
+  ) AS usage
+  LEFT JOIN scopedb.devin_cli.model_pricing AS rates ON usage.model = rates.model
+  SELECT
+    usage.model AS model,
+    usage.input_tokens AS input_tokens,
+    usage.cache_read_tokens AS cache_read_tokens,
+    usage.cache_creation_tokens AS cache_creation_tokens,
+    usage.output_tokens AS output_tokens,
+    usage.input_tokens + usage.cache_read_tokens + usage.cache_creation_tokens + usage.output_tokens AS total_tokens,
     IF(
-      usage.input_tokens >= 1000.0,
-      CAST(ROUND(usage.input_tokens / 100.0) / 10.0 AS string) || 'K',
-      CAST(ROUND(usage.input_tokens) AS string)
+      rates.input_rate_per_million IS NULL,
+      NULL,
+      ROUND(
+        (
+          ((usage.input_tokens + usage.cache_creation_tokens) * rates.input_rate_per_million)
+          + (usage.cache_read_tokens * rates.cached_input_rate_per_million)
+          + (usage.output_tokens * rates.output_rate_per_million)
+        ) / 10000.0
+      ) / 100.0
+    ) AS estimated_cost_usd
+  ORDER BY estimated_cost_usd DESC NULLS LAST, total_tokens DESC, model
+) AS ranked
+SELECT
+  ranked.model AS model,
+  IF(
+    ranked.input_tokens >= 1000000.0,
+    CAST(ROUND(ranked.input_tokens / 100000.0) / 10.0 AS string) || 'M',
+    IF(
+      ranked.input_tokens >= 1000.0,
+      CAST(ROUND(ranked.input_tokens / 100.0) / 10.0 AS string) || 'K',
+      CAST(ROUND(ranked.input_tokens) AS string)
     )
   ) AS input,
   IF(
-    usage.cache_read_tokens >= 1000000.0,
-    CAST(ROUND(usage.cache_read_tokens / 100000.0) / 10.0 AS string) || 'M',
+    ranked.cache_read_tokens >= 1000000.0,
+    CAST(ROUND(ranked.cache_read_tokens / 100000.0) / 10.0 AS string) || 'M',
     IF(
-      usage.cache_read_tokens >= 1000.0,
-      CAST(ROUND(usage.cache_read_tokens / 100.0) / 10.0 AS string) || 'K',
-      CAST(ROUND(usage.cache_read_tokens) AS string)
+      ranked.cache_read_tokens >= 1000.0,
+      CAST(ROUND(ranked.cache_read_tokens / 100.0) / 10.0 AS string) || 'K',
+      CAST(ROUND(ranked.cache_read_tokens) AS string)
     )
   ) AS `cacheRead`,
   IF(
-    usage.cache_creation_tokens >= 1000000.0,
-    CAST(ROUND(usage.cache_creation_tokens / 100000.0) / 10.0 AS string) || 'M',
+    ranked.cache_creation_tokens >= 1000000.0,
+    CAST(ROUND(ranked.cache_creation_tokens / 100000.0) / 10.0 AS string) || 'M',
     IF(
-      usage.cache_creation_tokens >= 1000.0,
-      CAST(ROUND(usage.cache_creation_tokens / 100.0) / 10.0 AS string) || 'K',
-      CAST(ROUND(usage.cache_creation_tokens) AS string)
+      ranked.cache_creation_tokens >= 1000.0,
+      CAST(ROUND(ranked.cache_creation_tokens / 100.0) / 10.0 AS string) || 'K',
+      CAST(ROUND(ranked.cache_creation_tokens) AS string)
     )
   ) AS `cacheCreation`,
   IF(
-    usage.output_tokens >= 1000000.0,
-    CAST(ROUND(usage.output_tokens / 100000.0) / 10.0 AS string) || 'M',
+    ranked.output_tokens >= 1000000.0,
+    CAST(ROUND(ranked.output_tokens / 100000.0) / 10.0 AS string) || 'M',
     IF(
-      usage.output_tokens >= 1000.0,
-      CAST(ROUND(usage.output_tokens / 100.0) / 10.0 AS string) || 'K',
-      CAST(ROUND(usage.output_tokens) AS string)
+      ranked.output_tokens >= 1000.0,
+      CAST(ROUND(ranked.output_tokens / 100.0) / 10.0 AS string) || 'K',
+      CAST(ROUND(ranked.output_tokens) AS string)
     )
   ) AS output,
-  usage.input_tokens + usage.cache_read_tokens + usage.cache_creation_tokens + usage.output_tokens AS total_tokens,
   IF(
-    rates.input_rate_per_million IS NULL,
-    NULL,
-    ROUND(
-      (
-        ((usage.input_tokens + usage.cache_creation_tokens) * rates.input_rate_per_million)
-        + (usage.cache_read_tokens * rates.cached_input_rate_per_million)
-        + (usage.output_tokens * rates.output_rate_per_million)
-      ) / 10000.0
-    ) / 100.0
-  ) AS estimated_cost_usd
-ORDER BY estimated_cost_usd DESC NULLS LAST, total_tokens DESC, model
+    ranked.total_tokens >= 1000000.0,
+    CAST(ROUND(ranked.total_tokens / 100000.0) / 10.0 AS string) || 'M',
+    IF(
+      ranked.total_tokens >= 1000.0,
+      CAST(ROUND(ranked.total_tokens / 100.0) / 10.0 AS string) || 'K',
+      CAST(ROUND(ranked.total_tokens) AS string)
+    )
+  ) AS total,
+  ranked.estimated_cost_usd AS estimated_cost_usd
