@@ -73,4 +73,6 @@ SELECT
       ) / 10000.0
     ) / 100.0
   ) AS estimated_cost_usd
-ORDER BY estimated_cost_usd DESC NULLS LAST, model
+ORDER BY estimated_cost_usd DESC NULLS LAST,
+  (usage.input_tokens + usage.cache_read_tokens + usage.cache_creation_tokens + usage.output_tokens) DESC,
+  model
