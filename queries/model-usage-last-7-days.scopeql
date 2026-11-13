@@ -62,6 +62,7 @@ SELECT
       CAST(ROUND(usage.output_tokens) AS string)
     )
   ) AS output,
+  usage.input_tokens + usage.cache_read_tokens + usage.cache_creation_tokens + usage.output_tokens AS total_tokens,
   IF(
     rates.input_rate_per_million IS NULL,
     NULL,
@@ -73,6 +74,4 @@ SELECT
       ) / 10000.0
     ) / 100.0
   ) AS estimated_cost_usd
-ORDER BY estimated_cost_usd DESC NULLS LAST,
-  (usage.input_tokens + usage.cache_read_tokens + usage.cache_creation_tokens + usage.output_tokens) DESC,
-  model
+ORDER BY estimated_cost_usd DESC NULLS LAST, total_tokens DESC, model
